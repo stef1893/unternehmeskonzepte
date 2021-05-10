@@ -1,0 +1,5 @@
+opencv-python
+pytesseract
+tabula-py
+paho-mqtt
+
