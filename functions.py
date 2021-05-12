@@ -167,7 +167,7 @@ def get_message(licha, parameter):
         })
 
     # String
-    message_str = "licha" + ":" + str(licha) + ","
+    message_str = "licha" + ":" + str(licha) + ";"
 
     for z in parameter:
         message_str = message_str + str(z.name) + ":" + str(z.messwert) + ";"
