@@ -140,12 +140,7 @@ def connect_mqtt(broker, port, client_id):
     return client
 
 def publish(client, message):
-    msg_count = 0
-    while True:
-        time.sleep(1)
-
-        client.publish(topic, message)
-        client.publish(topic, "Hallo SAP. Ein paar Zeichen mehr")
+    client.publish(topic, message)
 
 def send_json(client, message):
     result = client.publish(topic, str(message))
@@ -172,7 +167,7 @@ def get_message(licha, parameter):
         })
 
     # String
-    message_str = "licha" + ":" + str(licha) + ","
+    message_str = "licha" + ":" + str(licha) + ";"
 
     for z in parameter:
         message_str = message_str + str(z.name) + ":" + str(z.messwert) + ";"
