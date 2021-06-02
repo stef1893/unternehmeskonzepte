@@ -10,6 +10,15 @@ import numpy as np
 from tabula import read_pdf
 
 
+class Parameter():
+    def __init__(self, name: str, messwert: str):
+        self.name = name
+        self.messwert = messwert
+
+    def __str__(self):
+        return self.name + ": " + str(self.messwert)
+
+
 def ocr_core(img):
     text = pytesseract.image_to_string(img, lang='deu')
     return text
@@ -22,26 +31,34 @@ def get_grayscale(image):
 
 # remove nosie
 def remove_noise(image):
-    return cv2.medianBlur(image, 5)
+    return cv2.medianBlur(image, 7)
 
 
 # thresholding
 def thresholding(image):
+    #cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
+# Get Image
+def get_img(img):
+
+    pytesseract.pytesseract.tesseract_cmd = 'C:\Program Files\Tesseract-OCR\\tesseract.exe'
+    #show_img(img)
+    img = get_grayscale(img)
+    show_img(img)
+    #remove_noise(img)
+    #show_img(img)
+    #img = thresholding(img)
+    show_img(img)
+
+
+    return img
 
 def show_img(img):
     cv2.imshow('image', img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-class Parameter():
-    def __init__(self, name: str, messwert: str):
-        self.name = name
-        self.messwert = messwert
-
-    def __str__(self):
-        return self.name + ": " + str(self.messwert)
 
 def get_Charge_by_cam():
 
@@ -145,17 +162,10 @@ def publish(client, message):
 def send_json(client, message):
     result = client.publish(topic, str(message))
 
-# Get Image
-def get_img(img):
-
-    pytesseract.pytesseract.tesseract_cmd = 'C:\Program Files\Tesseract-OCR\\tesseract.exe'
-    img = get_grayscale(img)
-    img = thresholding(img)
-
-    return img
 
 def get_message(licha, parameter):
     # Json
+    licha = licha.replace("-", "")
     message_json = {
         "licha": licha,
         "chargenclassen": []
@@ -228,17 +238,19 @@ client_id = f'python-mqtt-{random.randint(0, 1000)}'
 
 # Get Parameter
 #licha_cam, parameter_cam = get_Charge_by_cam()
-licha_img, parameter_img = get_Charge_by_img("V342_21115025_01-1.png")
+#icha_img, parameter_img = get_Charge_by_img("V342_21115025_01-1.png")
 #licha_pdf, parameter_pdf = get_charge_by_pdf("V342_21115025_01.pdf")
 
 #Get Message
 
 #message_cam: str = get_message(licha_cam, parameter_cam)
-message_img: str = get_message(licha_img, parameter_img)
+#message_img: str = get_message(licha_img, parameter_img)
 #message_pdf: str = get_message(licha_pdf, parameter_pdf)
 
 
 #Send Data
-client = connect_mqtt(broker, port, client_id)
+#client = connect_mqtt(broker, port, client_id)
 #publish(client, str(message_img))
 #send_json(client, "Hallo SAP.")
+
+#print(message_cam)
