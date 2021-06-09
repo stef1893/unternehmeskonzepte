@@ -15,6 +15,7 @@ from functions import *
 class Hauptfenster(QtWidgets.QWidget):
     def __init__(self, parent=None, typ:str="", path:str=""):
         super(Hauptfenster, self,).__init__()
+        self.setStyleSheet(open('stylesheet.css').read())
         self.typ = typ
         self.path = path
 
@@ -22,13 +23,11 @@ class Hauptfenster(QtWidgets.QWidget):
 class Start(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-
-
+        self.setStyleSheet(open('stylesheet.css').read())
 
         self.bt_cam = QtWidgets.QPushButton("Kamera")
         self.bt_pic = QtWidgets.QPushButton("Bild")
         self.bt_pdf = QtWidgets.QPushButton("PDF")
-        #self.text = QtWidgets.QLabel("Hello World", alignment=QtCore.Qt.AlignCenter)
 
         self.layout = QtWidgets.QVBoxLayout(self)
         #self.layout.addWidget(self.text)
@@ -193,10 +192,10 @@ class Start(QtWidgets.QWidget):
                 parameter.append(Parameter(y[0].text(), y[1].text()))
 
         message = get_message(licha, parameter)
-        print("stop")
+        print(message)
 
-        # client = connect_mqtt(broker, port, client_id)
-        # publish(client, message)
+        client = connect_mqtt(broker, port, client_id)
+        publish(client, message)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

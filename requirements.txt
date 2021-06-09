@@ -4,5 +4,6 @@ tabula-py
 paho-mqtt
 QT
 PySide6
+pyspellchecker
 
 

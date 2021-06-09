@@ -6,7 +6,7 @@ import paho
 import cv2
 from paho.mqtt import client as mqtt_client
 import numpy as np
-#import PyPDF2
+from pdf2image import convert_from_path
 from tabula import read_pdf
 
 
@@ -18,6 +18,25 @@ class Parameter():
     def __str__(self):
         return self.name + ": " + str(self.messwert)
 
+
+class Spellchecker():
+    def __init__(self, libary):
+        self.libary = libary
+
+    def edits1(self, word):
+        "All edits that are one edit away from `word`."
+        letters = 'abcdefghijklmnopqrstuvwxyzABCCDEFGHIJKLMNOPQRSTUVWXYZ' #ABCCDEFGHIJKLMNOPQRSTUVWXYZ
+        splits = [(word[:i], word[i:]) for i in range(len(word) + 1)]
+        deletes = [L + R[1:] for L, R in splits if R]
+        transposes = [L + R[1] + R[0] + R[2:] for L, R in splits if len(R) > 1]
+        replaces = [L + c + R[1:] for L, R in splits if R for c in letters]
+        inserts = [L + c + R for L, R in splits for c in letters]
+        return set(deletes + transposes + replaces + inserts)
+
+    def known(self, words):
+        elemente = set(w for w in words if w in self.libary)
+
+        return elemente.pop()
 
 def ocr_core(img):
     text = pytesseract.image_to_string(img, lang='deu')
@@ -43,13 +62,10 @@ def thresholding(image):
 def get_img(img):
 
     pytesseract.pytesseract.tesseract_cmd = 'C:\Program Files\Tesseract-OCR\\tesseract.exe'
-    #show_img(img)
     img = get_grayscale(img)
-    show_img(img)
     #remove_noise(img)
-    #show_img(img)
     #img = thresholding(img)
-    show_img(img)
+    #show_img(img)
 
 
     return img
@@ -121,9 +137,8 @@ def get_Charge_by_img(path):
 
 def get_charge_by_pdf(pdf):
     global parameternames
-
     licha:str = ""
-
+    spellchecker = Spellchecker(parameternames)
     df = read_pdf(pdf)
     header = list(df[0].columns.values)
 
@@ -136,11 +151,21 @@ def get_charge_by_pdf(pdf):
 
     df[0].columns = ['name1', 'value1', 'unit1', 'name2', 'value2', 'unit3']
     for index, row in df[0].iterrows():
+
+        test1 = spellchecker.edits1(row['name1'])
+        print(len(test1))
+        test2 = spellchecker.known(spellchecker.edits1(row['name1']))
+        test3 = len(spellchecker.known(spellchecker.edits1(row['name1'])))
+
         if row['name1'] in parameternames:
             parameter.append(Parameter(row['name1'], row['value1']))
+        elif len(spellchecker.known(spellchecker.edits1(row['name1']))) > 0:
+            parameter.append(Parameter(spellchecker.known(spellchecker.edits1(row['name1'])), row['value1']))
 
         if row['name2'] in parameternames:
             parameter.append(Parameter(row['name2'], row['value2']))
+        elif len(spellchecker.known(spellchecker.edits1(row['name2']))) > 0:
+            parameter.append(Parameter(spellchecker.known(spellchecker.edits1(row['name2'])), row['value2']))
 
     return licha, parameter
 
@@ -230,7 +255,7 @@ chargenNummerNames = [
 
 # MQTT Meta-Daten
 broker = 'broker.hivemq.com'
-port = 1883
+port = 1883 #8000
 topic = "hs-albsig/unternehmenskonzepte"
 # generate client ID with pub prefix randomly
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
