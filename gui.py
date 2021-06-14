@@ -194,8 +194,8 @@ class Start(QtWidgets.QWidget):
         message = get_message(licha, parameter)
         print(message)
 
-        client = connect_mqtt(broker, port, client_id)
-        publish(client, message)
+        connectMqtt(message)
+        #publish(client, message)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])

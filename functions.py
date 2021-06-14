@@ -2,11 +2,11 @@ import cv2
 import pytesseract
 import random
 import time
-import paho
+import paho.mqtt.client as mqtt
 import cv2
 from paho.mqtt import client as mqtt_client
 import numpy as np
-from pdf2image import convert_from_path
+from pdf2image import convert_from_path, convert_from_bytes
 from tabula import read_pdf
 
 
@@ -133,7 +133,14 @@ def get_Charge_by_img(path):
 
             parameter.append(Parameter(name, messwert))
 
+    for x in parameter:
+        x.messwert = x.messwert.replace(",",".")
+
+
     return licha, parameter
+
+def get_charge_by_pdf2(pdf):
+    images = convert_from_bytes(open(pdf, 'rb').read())
 
 def get_charge_by_pdf(pdf):
     global parameternames
@@ -164,28 +171,48 @@ def get_charge_by_pdf(pdf):
 
         if row['name2'] in parameternames:
             parameter.append(Parameter(row['name2'], row['value2']))
-        elif len(spellchecker.known(spellchecker.edits1(row['name2']))) > 0:
-            parameter.append(Parameter(spellchecker.known(spellchecker.edits1(row['name2'])), row['value2']))
+        #elif len(spellchecker.known(spellchecker.edits1(row['name2']))) > 0:
+          #  parameter.append(Parameter(spellchecker.known(spellchecker.edits1(row['name2'])), row['value2']))
+
+    for x in parameter:
+        x.messwert = x.messwert.replace(",",".")
 
     return licha, parameter
 
-def connect_mqtt(broker, port, client_id):
-    def on_connect(client, userdata, flags, rc):
-        if rc == 0:
-            print("Connected to MQTT Broker!")
-        else:
-            print("Failed to connect, return code %d\n", rc)
+def connectMqtt(message):
+    broker = "broker.hivemq.com"
+    port = 8000
+    topic = "hs-albsig/unternehmenskonzepte"
+    # generate client ID with pub prefix randomly
+    client_id = f'python-mqtt-{random.randint(0, 1000)}'
 
-    client = mqtt_client.Client(client_id)
-    client.on_connect = on_connect
-    client.connect(broker, port)
-    return client
+    def connect_mqtt():
+        def on_connect(client, userdata, flags, rc):
+            if rc == 0:
+                print("Connected to MQTT Broker!")
+            else:
+                print("Failed to connect, return code %d\n", rc)
+
+        client = mqtt_client.Client(client_id, transport='websockets')
+        # client.username_pw_set("visopro56", "BierMES$79$")
+        # client.tls_set()
+        client.on_connect = on_connect
+        client.connect(broker, port)
+        return client
+
+    def publish(client):
+        result = client.publish(topic, message)
+
+    client = connect_mqtt()
+    time.sleep(1)
+    publish(client)
+
 
 def publish(client, message):
-    client.publish(topic, message)
+    client.publish("hs-albsig/unternehmenskonzepte", "test1")
 
 def send_json(client, message):
-    result = client.publish(topic, str(message))
+    result = client.publish(topic, str("hallo"))
 
 
 def get_message(licha, parameter):
@@ -254,8 +281,8 @@ chargenNummerNames = [
     ]
 
 # MQTT Meta-Daten
-broker = 'broker.hivemq.com'
-port = 1883 #8000
+broker = 'broker.hivemq.com' #'broker.hivemq.com'
+port = 8000 #1883
 topic = "hs-albsig/unternehmenskonzepte"
 # generate client ID with pub prefix randomly
 client_id = f'python-mqtt-{random.randint(0, 1000)}'
