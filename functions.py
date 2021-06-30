@@ -2,6 +2,7 @@ import cv2
 import pytesseract
 import random
 import time
+import os
 import paho.mqtt.client as mqtt
 import cv2
 from paho.mqtt import client as mqtt_client
@@ -131,16 +132,30 @@ def get_Charge_by_img(path):
 
             messwert: str = string[start_messwert: start_messwert + end_messwert]
 
+
+          #  if ["abcdefghijklmnopqrstwvxyz"] in messwert:
+          #      end_messwert: int = string[string.find(name) + len(name) + 1:].find("n") - 1
+          #      messwert: str = string[start_messwert: start_messwert + end_messwert]
+
             parameter.append(Parameter(name, messwert))
 
     for x in parameter:
         x.messwert = x.messwert.replace(",",".")
 
-
+    licha = licha.replace("-", "")
     return licha, parameter
 
 def get_charge_by_pdf2(pdf):
-    images = convert_from_bytes(open(pdf, 'rb').read())
+    pages = convert_from_path(pdf, 500)
+    pages[0].save('pdfToPng.png', 'PNG')
+    path:str = os.path.dirname(pdf)
+    path_name:str = path +"/pdfToPng.png"
+
+    licha, parameter = get_Charge_by_img(path_name)
+    os.remove(path_name)
+
+    return licha, parameter
+    #get_Charge_by_img()
 
 def get_charge_by_pdf(pdf):
     global parameternames
@@ -194,8 +209,6 @@ def connectMqtt(message):
                 print("Failed to connect, return code %d\n", rc)
 
         client = mqtt_client.Client(client_id, transport='websockets')
-        # client.username_pw_set("visopro56", "BierMES$79$")
-        # client.tls_set()
         client.on_connect = on_connect
         client.connect(broker, port)
         return client
@@ -207,17 +220,8 @@ def connectMqtt(message):
     time.sleep(1)
     publish(client)
 
-
-def publish(client, message):
-    client.publish("hs-albsig/unternehmenskonzepte", "test1")
-
-def send_json(client, message):
-    result = client.publish(topic, str("hallo"))
-
-
 def get_message(licha, parameter):
     # Json
-    licha = licha.replace("-", "")
     message_json = {
         "licha": licha,
         "chargenclassen": []
@@ -273,7 +277,8 @@ parameternames = [
         "Hartong VZ 45°C",
         "Eiweißgehalt",
         "Löslich-N mg/100g",
-        "Kolbachzahl"
+        "Kolbachzahl",
+        "Aussehen"
     ]
 
 chargenNummerNames = [
